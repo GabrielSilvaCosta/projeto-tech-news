@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import requests
 from parsel import Selector
@@ -37,8 +38,44 @@ def scrape_next_page_link(html_content):
 
 # Requisito 4
 def scrape_news(html_content):
-    """Seu código deve vir aqui"""
-    raise NotImplementedError
+    selector = Selector(html_content)
+
+    title = selector.css(".entry-title::text").get()
+    title = title.strip() if title else None
+    url = selector.css("link[rel='canonical']::attr(href)").get()
+    timestamp_str = selector.css(".meta-date::text").get()
+    writer = selector.css(".title-author a::text").get()
+    writer = writer.strip() if writer else None
+    reading_time_str = selector.css(".meta-reading-time::text").get()
+    summary = selector.css(
+        ".entry-content > p:nth-of-type(1) *::text"
+    ).getall()
+    category = selector.css(".label::text").get()
+
+    # Convertendo timestamp para o formato desejado (dd/mm/AAAA)
+    timestamp = (
+        datetime.strptime(timestamp_str, "%d/%m/%Y").strftime("%d/%m/%Y")
+        if timestamp_str
+        else None
+    )
+
+    # Convertendo reading_time para um número inteiro
+    reading_time = (
+        int(reading_time_str.split()[0]) if reading_time_str else None
+    )
+
+    # Juntando o summary em uma string, removendo caracteres vazios no final
+    summary = "".join(summary).strip() if summary else None
+
+    return {
+        "url": url,
+        "title": title,
+        "timestamp": timestamp,
+        "writer": writer,
+        "reading_time": reading_time,
+        "summary": summary,
+        "category": category,
+    }
 
 
 # Requisito 5
